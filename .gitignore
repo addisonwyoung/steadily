@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.sites-runtime/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
