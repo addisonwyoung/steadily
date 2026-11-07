@@ -6,15 +6,7 @@ import { useSteadily } from '../../store/context';
 import { reasons, type Habit, type Reason } from '../../domain/schema';
 import { suggestions } from '../../domain/content';
 
-export function RecoveryDialog({
-  habit,
-  onClose,
-  onEdit,
-}: {
-  habit: Habit;
-  onClose(): void;
-  onEdit(): void;
-}) {
+export function RecoveryDialog({ habit, onClose }: { habit: Habit; onClose(): void }) {
   const recordMiss = useSteadily((state) => state.recordMiss);
   const completeHabit = useSteadily((state) => state.completeHabit);
   const notify = useFeedback();
@@ -32,7 +24,7 @@ export function RecoveryDialog({
   return (
     <Modal
       title="Let’s make this a little easier."
-      description={`${habit.title} can wait, shrink, or move. What got in the way?`}
+      description={`${habit.title} can wait. What got in the way?`}
       onClose={onClose}
     >
       <div className="choices">
@@ -51,23 +43,19 @@ export function RecoveryDialog({
       {reason && (
         <>
           <div className="callout">{suggestions[reason]}</div>
-          <p className="note">Minimum: {habit.minimum}</p>
           <button
             className="primary full"
             onClick={() => {
               try {
-                completeHabit(habit.id, 'minimum');
-                notify('Small counts. You showed up.');
+                completeHabit(habit.id);
+                notify('Habit completed.');
                 onClose();
               } catch (err) {
                 setError(errorMessage(err));
               }
             }}
           >
-            I did the minimum version
-          </button>
-          <button className="full" onClick={onEdit}>
-            Adjust this habit
+            I completed this habit
           </button>
           <button
             className="textbutton full"

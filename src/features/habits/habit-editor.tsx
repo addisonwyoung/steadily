@@ -10,14 +10,14 @@ export function HabitEditor({ habit, onClose }: { habit?: Habit; onClose(): void
   const saveHabit = useSteadily((state) => state.saveHabit);
   const notify = useFeedback();
   const [value, setValue] = useState<HabitInput>(
-    habit ?? { title: '', normal: '', minimum: '', time: 'Anytime', icon: '✧' },
+    habit ?? { title: '', normal: '', time: 'Anytime', icon: '✧' },
   );
   const [error, setError] = useState<string | null>(null);
   function submit(event: FormEvent) {
     event.preventDefault();
     const parsed = habitInputSchema.safeParse(value);
     if (!parsed.success) {
-      setError('Give your habit a name, a normal version, and a smaller version.');
+      setError('Give your habit a name and a task.');
       return;
     }
     try {

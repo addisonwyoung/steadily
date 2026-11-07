@@ -26,10 +26,8 @@ export default function ProgressPage() {
           <p>Habit completion</p>
         </div>
         <div className="card">
-          <span className="stat">
-            {stats.normal} <small>/ {stats.minimum}</small>
-          </span>
-          <p>Normal / minimum</p>
+          <span className="stat">{stats.normal + stats.minimum}</span>
+          <p>Habits completed</p>
         </div>
         <div className="card">
           <span className="stat">{stats.returns}</span>
@@ -42,8 +40,7 @@ export default function ProgressPage() {
             <h2>The last seven days</h2>
             <WeekChart today={today} />
             <p className="note">
-              Normal and minimum versions both count. Rates include each planned day from the day
-              you added a habit, including today.
+              Completions include each planned day from the day you added a habit, including today.
             </p>
           </section>
           <section className="card">

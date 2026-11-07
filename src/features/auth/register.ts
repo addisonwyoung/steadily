@@ -17,6 +17,16 @@ export type Registration = z.infer<typeof registrationSchema>;
 export async function registerAccount(input: Registration): Promise<'confirm-email' | 'signed-in'> {
   const values = registrationSchema.parse(input);
   const { supabase } = await import('../../lib/supabase');
+  const { data: available, error: availabilityError } = await supabase.rpc(
+    'steadily_username_available',
+    { candidate: values.username },
+  );
+  if (availabilityError) throw availabilityError;
+  if (available !== true) {
+    throw Object.assign(new Error('That username is already taken. Choose another.'), {
+      code: 'username_unavailable',
+    });
+  }
   const { data, error } = await supabase.auth.signUp({
     email: values.email,
     password: values.password,
@@ -25,7 +35,21 @@ export async function registerAccount(input: Registration): Promise<'confirm-ema
       emailRedirectTo: `${window.location.origin}/`,
     },
   });
-  if (error) throw error;
+  if (error) {
+    // Another signup can claim the name between the check and account creation.
+    if (error.code === 'unexpected_failure' || error.code === 'database_error') {
+      const { data: stillAvailable, error: recheckError } = await supabase.rpc(
+        'steadily_username_available',
+        { candidate: values.username },
+      );
+      if (!recheckError && stillAvailable === false) {
+        throw Object.assign(new Error('That username is already taken. Choose another.'), {
+          code: 'username_unavailable',
+        });
+      }
+    }
+    throw error;
+  }
   // A success without a session may also mask an existing email for privacy.
   return data.session ? 'signed-in' : 'confirm-email';
 }

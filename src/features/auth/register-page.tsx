@@ -29,11 +29,13 @@ export default function RegisterPage() {
     } catch (err) {
       const code = err && typeof err === 'object' && 'code' in err ? err.code : undefined;
       setError(
-        code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit'
-          ? 'Too many attempts. Wait a few minutes before trying again.'
-          : code === 'weak_password'
-            ? 'Supabase requires a stronger password. Try a longer, unique password.'
-            : 'Registration could not finish. Check your connection and try again. If this continues, check your project’s email settings.',
+        code === 'username_unavailable'
+          ? 'That username is already taken. Choose another.'
+          : code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit'
+            ? 'Too many attempts. Wait a few minutes before trying again.'
+            : code === 'weak_password'
+              ? 'Supabase requires a stronger password. Try a longer, unique password.'
+              : 'Registration could not finish. Check your connection and try again. If this continues, check your project’s email settings.',
       );
     } finally {
       submitting.current = false;
@@ -59,12 +61,11 @@ export default function RegisterPage() {
               : 'Your project returned a signed-in session without requiring email confirmation.'}
           </p>
           <p className="note">
-            Your requested username is saved with the account. It is not reserved until profile
-            setup is complete. Login, profile setup, and habit syncing are the next steps; habits
-            still stay in this browser for now.
+            For a new account, your username and profile are created during registration. Confirm
+            your email, then sign in to get started. Habits still stay in this browser for now.
           </p>
-          <Link className="progress-link" to="/">
-            Back to my local habits →
+          <Link className="progress-link" to="/login">
+            Go to sign in →
           </Link>
         </section>
       ) : (
@@ -85,8 +86,8 @@ export default function RegisterPage() {
               aria-describedby="username-help"
             />
             <small id="username-help">
-              3–24 letters, numbers, or underscores. Saved in lowercase; availability is checked
-              during profile setup.
+              3–24 letters, numbers, or underscores. Saved in lowercase and reserved during
+              registration.
             </small>
             <label htmlFor="register-email">Email</label>
             <input
@@ -121,8 +122,8 @@ export default function RegisterPage() {
             Account setup is being added step by step. Creating an account does not upload your
             existing habits.
           </p>
-          <Link className="progress-link" to="/">
-            Continue with local habits →
+          <Link className="progress-link" to="/login">
+            Already have an account? Sign in →
           </Link>
         </form>
       )}

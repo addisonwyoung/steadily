@@ -14,9 +14,11 @@ export const ratingSchema = z.number().int().min(1).max(5);
 const text = (max: number) => z.string().trim().min(1, 'Please enter a value.').max(max);
 
 export const habitInputSchema = z.object({
+  templateId: z.string().min(1).optional(),
   title: text(80),
   normal: text(160),
-  minimum: text(160),
+  // Legacy field accepted so existing saved habits remain readable.
+  minimum: z.string().trim().max(160).optional(),
   time: z.enum(times),
   icon: z.string().default('✧'),
 });
@@ -42,7 +44,7 @@ export const challengeEntrySchema = z.object({
 export const profileSchema = z.object({
   name: z.string().trim().max(40),
   barrier: reasonSchema,
-  priority: z.string().min(1),
+  priority: z.string(),
 });
 // The v1 data shape is retained; versioning belongs to the storage envelope.
 export const appDataSchema = z
@@ -58,7 +60,10 @@ export const appDataSchema = z
     if (new Set(ids).size !== ids.length) {
       ctx.addIssue({ code: 'custom', message: 'Habit IDs must be unique.' });
     }
-    if (data.profile && (!ids.length || !ids.includes(data.profile.priority))) {
+    if (
+      data.profile &&
+      (ids.length ? !ids.includes(data.profile.priority) : data.profile.priority !== '')
+    ) {
       ctx.addIssue({ code: 'custom', message: 'A profile needs habits and a valid priority.' });
     }
     const dates = data.challenge.map((entry) => entry.date);

@@ -6,13 +6,12 @@ import { useSteadily } from '../../store/context';
 import { useFeedback } from '../../components/feedback';
 import { errorMessage } from '../../components/ui';
 import { RecoveryDialog } from './recovery-dialog';
-import { HabitEditor } from './habit-editor';
 
 export function HabitCard({ habit, today }: { habit: Habit; today: string }) {
   const entry = useSteadily((state) => state.data.logs[today]?.[habit.id]);
   const completeHabit = useSteadily((state) => state.completeHabit);
   const undoHabit = useSteadily((state) => state.undoHabit);
-  const [dialog, setDialog] = useState<'recovery' | 'edit' | null>(null);
+  const [dialog, setDialog] = useState<'recovery' | null>(null);
   const notify = useFeedback();
   function perform(action: () => void, message: string) {
     try {
@@ -36,7 +35,7 @@ export function HabitCard({ habit, today }: { habit: Habit; today: string }) {
           <p>{habit.normal}</p>
           {isComplete(entry) ? (
             <div className="status">
-              {entry?.type === 'minimum' ? 'Minimum version' : 'Normal version'} completed ·{' '}
+              Completed ·{' '}
               <button
                 className="textbutton"
                 onClick={() => perform(() => undoHabit(habit.id), 'Completion undone.')}
@@ -51,34 +50,17 @@ export function HabitCard({ habit, today }: { habit: Habit; today: string }) {
       </div>
       <div className="actions">
         <button
-          aria-pressed={entry?.type === 'normal'}
-          className={entry?.type === 'normal' ? 'active' : ''}
-          onClick={() => perform(() => completeHabit(habit.id, 'normal'), 'One small step, taken.')}
+          aria-pressed={isComplete(entry)}
+          className={isComplete(entry) ? 'active' : ''}
+          onClick={() => perform(() => completeHabit(habit.id), 'Habit completed.')}
         >
-          Normal
-        </button>
-        <button
-          aria-pressed={entry?.type === 'minimum'}
-          className={entry?.type === 'minimum' ? 'active' : ''}
-          title={habit.minimum}
-          onClick={() =>
-            perform(() => completeHabit(habit.id, 'minimum'), 'Small counts. You showed up.')
-          }
-        >
-          Minimum
+          Complete
         </button>
         <button className="textbutton" onClick={() => setDialog('recovery')}>
           Having a hard day?
         </button>
       </div>
-      {dialog === 'recovery' && (
-        <RecoveryDialog
-          habit={habit}
-          onClose={() => setDialog(null)}
-          onEdit={() => setDialog('edit')}
-        />
-      )}
-      {dialog === 'edit' && <HabitEditor habit={habit} onClose={() => setDialog(null)} />}
+      {dialog === 'recovery' && <RecoveryDialog habit={habit} onClose={() => setDialog(null)} />}
     </article>
   );
 }

@@ -18,7 +18,7 @@ Zod schemas are the source of TypeScript domain types and runtime validation. Br
 
 The migration copies a valid v1 payload to `{ version: 2, data }` and retains v1 unchanged. It prefers v2 after migration. Invalid or future-version data is preserved and saving is paused; silent resetting would risk data loss. Future migrations can branch on the envelope version while preserving earlier inputs.
 
-This is intentionally not a database abstraction that pretends localStorage has transactions or cross-device durability. It is a synchronous storage port for a small, single-browser MVP. Cross-tab conflict resolution, export/import, account identity, and synchronization are not implemented.
+This is intentionally not a database abstraction that pretends localStorage has transactions or cross-device durability. It is a synchronous storage port for a small, single-browser MVP. Supabase Auth supplies account identity. The app restores a session before rendering protected routes, listens for sign-in/sign-out changes, and rejects an older restoration result after a newer auth event. Account IDs namespace browser storage; stores and optional agent tools unmount on sign-out or account changes. Unowned data is preserved separately. A database trigger creates profiles atomically with Auth signup, using the username supplied during registration. An availability RPC returns a boolean for form feedback; the unique constraint remains authoritative during concurrent signups. Apply the signup-profile migration before using this flow. Existing profiles are preserved, and available valid usernames from earlier signup metadata are backfilled. Old accounts with missing or conflicting usernames require recovery, rather than a routine username setup screen. Cross-tab data conflict resolution, export/import, and synchronization are not implemented.
 
 ## 4. Calendar and recovery semantics
 
@@ -41,3 +41,11 @@ The existing optional WebMCP operations delegate to the same store actions and v
 ## 7. Verification strategy
 
 Domain and storage tests cover high-impact edge cases. React integration tests exercise complete user journeys through accessible roles and labels. TypeScript, ESLint, Prettier, tests, coverage reporting, and the production build form the repository’s quality workflow. jsdom tests do not establish visual fidelity or full assistive-technology support; those require browser/device checks.
+
+## Online habit selections
+
+`features/habits/user-habits.tsx` authenticates the request, scopes it to the expected account, validates joined template rows, and converts database fields into `Habit` records. Initial selections are upserted in one batch. Duplicate inserts are safe to retry. A follow-up read supplies the authoritative list after each mutation. If that read fails after a successful write, the app reports the failure; retry/reload reconciles the list.
+
+`store/account-store.tsx` blocks protected screens until the server list loads, ignores aborted account requests, and offers import for older browser-only selections when the online list is empty. Remote selections take precedence over browser snapshots. Matching local IDs and creation dates are retained to preserve browser-only completion history. Other devices derive dates from server timestamps in their local timezone.
+
+The store's `addSelectedHabit`, `removeSelectedHabit`, and `finishOnboarding` actions own saving and update the visible list only after the repository succeeds. `habitsSaving` serializes UI requests, including the grid and separate removal control. The local-only methods remain for tests and compatibility; production selection controls use the online actions. The 2–5 limit is checked in app actions; concurrent clients can still bypass it because this schema has no transactional database count constraint. There is no realtime subscription, and completion logs/check-ins remain local.

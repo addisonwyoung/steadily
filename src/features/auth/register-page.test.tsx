@@ -24,7 +24,7 @@ async function fill(username = 'Alex_123') {
   await user.type(screen.getByLabelText('Password'), 'a-long-test-password');
   return user;
 }
-it('normalizes the username and shows confirmation without promising a reservation', async () => {
+it('normalizes the username and shows confirmation with signup profile creation', async () => {
   vi.mocked(registerAccount).mockResolvedValue('confirm-email');
   const user = await fill();
   await user.click(screen.getByRole('button', { name: 'Create account' }));
@@ -34,7 +34,7 @@ it('normalizes the username and shows confirmation without promising a reservati
     password: 'a-long-test-password',
   });
   expect(await screen.findByRole('heading', { name: 'Check your email.' })).toBeInTheDocument();
-  expect(screen.getByText(/not reserved/)).toBeInTheDocument();
+  expect(screen.getByText(/profile are created during registration/)).toBeInTheDocument();
   expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
 });
 it('rejects invalid usernames before contacting Supabase', async () => {

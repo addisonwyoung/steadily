@@ -19,7 +19,14 @@ export default function TodayPage() {
   const [checkIn, setCheckIn] = useState(false);
   const focus = data.habits.find((habit) => habit.id === data.profile?.priority) ?? data.habits[0];
   const count = data.habits.filter((habit) => isComplete(data.logs[today]?.[habit.id])).length;
-  if (!focus) return null;
+  if (!focus)
+    return (
+      <section className="card">
+        <h1>Choose your next habit</h1>
+        <p>Your habit list is empty. Pick up to five habits to get started.</p>
+        <Link to="/habits">Choose habits →</Link>
+      </section>
+    );
   return (
     <>
       <PageHeading
@@ -40,25 +47,20 @@ export default function TodayPage() {
               <span className="badge">{focus.time}</span>
             </div>
             <h2>{focus.title}</h2>
-            <p>
-              {focus.normal}. If today feels full,{' '}
-              {focus.minimum.charAt(0).toLowerCase() + focus.minimum.slice(1)}.
-            </p>
+            <p>{focus.normal}</p>
             <button
               className="primary"
               disabled={isComplete(data.logs[today]?.[focus.id])}
               onClick={() => {
                 try {
-                  complete(focus.id, 'minimum');
-                  notify('Small counts. You showed up.');
+                  complete(focus.id);
+                  notify('Habit completed.');
                 } catch (err) {
                   notify(errorMessage(err));
                 }
               }}
             >
-              {isComplete(data.logs[today]?.[focus.id])
-                ? '✓ You showed up'
-                : 'Take the small step →'}
+              {isComplete(data.logs[today]?.[focus.id]) ? '✓ You showed up' : 'Complete habit →'}
             </button>
           </section>
           <section className="card">
@@ -80,7 +82,7 @@ export default function TodayPage() {
             <p className="note">
               {count === data.habits.length
                 ? 'You made room for yourself today. That is enough.'
-                : 'The minimum version counts. Some effort is still effort.'}
+                : 'Choose a habit and take your next step.'}
             </p>
           </section>
           <section className="card row wrap">

@@ -18,6 +18,22 @@ function setup() {
   };
 }
 describe('habit actions', () => {
+  it('requires two habits and reassigns priority when removing from three', () => {
+    const { store } = setup();
+    expect(() => store.getState().removeHabit('walk')).toThrow('at least two');
+    store.getState().saveHabit({ ...habitInput, title: 'Read' });
+    store.getState().saveHabit({ ...habitInput, title: 'Stretch' });
+    store.getState().removeHabit('walk');
+    expect(store.getState().data.habits).toHaveLength(2);
+    expect(store.getState().data.profile?.priority).toBe(store.getState().data.habits[0]?.id);
+    expect(() => store.getState().removeHabit(store.getState().data.habits[0]!.id)).toThrow(
+      'at least two',
+    );
+    const fresh = createSteadilyStore({ storage: memoryStorage() });
+    expect(() =>
+      fresh.getState().onboard({ name: '', barrier: 'Distraction' }, [habitInput]),
+    ).toThrow();
+  });
   it('validates IDs and completion types before mutating state', () => {
     const { store } = setup();
     const before = store.getState().data;

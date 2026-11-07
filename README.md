@@ -1,6 +1,6 @@
 # Steadily
 
-A mobile-friendly habit app for people who find rigid productivity systems hard to sustain. Every habit has a normal and minimum version. Progress measures showing up and returning after missed days, without resetting a streak.
+A mobile-friendly habit app for people who find rigid productivity systems hard to sustain. Each habit has one task and a single completion action. Progress measures showing up and returning after missed days, without resetting a streak.
 
 ## Run locally
 
@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open the localhost URL printed by Vite. No API keys, database setup, or account are required. To try the main flow, choose one or two habits, complete a minimum version, record an evening check-in, and view progress. Navigation supports direct links such as `/#/progress`.
+Copy `.env.example` to `.env.local` and fill in your Supabase project URL and publishable key. Open the localhost URL printed by Vite and sign in with a confirmed account, or use Create an account. Onboarding and every habit view require a session. Navigation supports direct links such as `/#/progress`.
 
 ## Technology and engineering
 
@@ -26,15 +26,15 @@ Open the localhost URL printed by Vite. No API keys, database setup, or account 
 | Testing       | Vitest, Testing Library, user-event       | Domain edge cases and user journeys using accessible queries              |
 | Quality       | ESLint, Prettier, GitHub Actions          | Repeatable type, lint, test, formatting, and build checks                 |
 
-The project deliberately remains a browser-only app. There is no server, authentication system, remote database, or cross-device syncing. This matches the MVP’s storage requirement. CSS preserves the original responsive visual design; there is no unnecessary styling framework migration.
+Supabase Auth handles registration, email confirmation, login, restored sessions, and local-device logout. The app gate controls navigation; database authorization remains the responsibility of Supabase Row Level Security. Selected habits are saved in Supabase `user_habits` and loaded before protected screens open. Completion history, check-ins, and daily priority still use browser storage, with separate keys for each authenticated user. Profile creation is handled by the signup trigger in `supabase/migrations/202610100001_profiles_at_signup.sql`; apply this migration in Supabase before testing registration. It reserves usernames during signup and backfills valid, available names from earlier signup metadata. Selected habits follow the account across devices on reload; completion history and check-ins do not yet sync. Apply the habit-template and user-habit migrations before using selections. CSS preserves the original responsive visual design.
 
 ## Product features
 
-- Two-step onboarding for one to five habits, including custom goals and typical barriers.
-- Normal and minimum completions, undo, editable habit versions and schedules, and a chosen daily priority.
+- Two-step onboarding for two to five habits from the shared Supabase catalog.
+- Habit completions, undo, selection toggles, and a chosen daily priority.
 - Daily mood, energy, stress, win, and missed-habit check-ins.
 - Deterministic suggestions informed by recent check-ins and missed-habit reasons.
-- Seven-day completion view, normal/minimum counts, and return-after-gap metrics.
+- Seven-day completion view, completion counts, and return-after-gap metrics.
 - Seven offline activities with difficulty and enjoyment ratings; one completion per calendar day.
 
 ## Code tour
@@ -46,7 +46,7 @@ src/
   domain/               Schemas, calendar functions, progress and recommendation rules
   features/
     onboarding/         Goal selection and habit setup
-    habits/             Daily checklist, editing, supportive recovery
+    habits/             Daily checklist, online selections, supportive recovery
     check-in/           Daily reflection
     challenge/          Offline activities
     progress/           Weekly view and check-in history
@@ -70,9 +70,11 @@ Tests cover v1 migration, malformed/unsupported storage, blocked writes, calenda
 
 ## Data and migration
 
-Existing `steadily-v1` browser data is validated and copied into a versioned `steadily-v2` envelope on the same origin. The v1 key remains intact as a recovery copy. A corrupt or unsupported v2 payload pauses saving instead of silently replacing it. If a write fails after a valid load, the change remains in memory and the user sees an error.
+Authenticated browser storage uses keys such as `steadily-v2:user:<user-id>`. Switching accounts mounts a new store, and signing out unmounts the store and its agent tools. Original unowned `steadily-v1` and `steadily-v2` data stays preserved separately; it is not automatically assigned to an account. The versioned loader still supports v1-to-v2 migration within a storage namespace. A corrupt or unsupported v2 payload pauses saving instead of silently replacing it. If a write fails after a valid load, the change remains in memory and the user sees an error.
 
-Browser storage is isolated by origin. Data from the hosted site does not appear automatically in localhost, another hostname, or another browser. Clearing site data removes saved progress. Multiple tabs are not a synchronized editing session; avoid editing in several tabs at once.
+Selected habits reload from Supabase on sign-in/app mount. Browser-only completion history and check-ins are isolated by origin; clearing site data removes that progress. Multiple tabs are not a synchronized editing session. The 2–5 selection limit is enforced by app actions, not by a database transaction across concurrent devices.
+
+On an older browser with local selections and an empty online list, the app offers an explicit one-time import of catalog matches. Choosing a fresh list preserves a recovery copy under the account-scoped `steadily-before-online` key. A failed server read shows a retry screen and never becomes an empty successful load.
 
 ## Deployment
 
@@ -82,7 +84,7 @@ Build artifacts are generated from source, not hand-edited. The original impleme
 
 ## Interview discussion points
 
-- Why minimum completions count equally, and how recovery metrics encode that product decision.
+- How completed habits and return-after-gap metrics represent progress.
 - How runtime schemas complement TypeScript at persistence and action boundaries.
 - How storage migration avoids overwriting the only copy of a user’s progress.
 - Why actions inject the clock, ID generator, and storage port for deterministic tests.

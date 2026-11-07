@@ -3,6 +3,24 @@ import { LEGACY_KEY, STORAGE_KEY, loadData, persistData } from './storage';
 import { fixture, memoryStorage } from '../test/fixtures';
 
 describe('versioned browser storage', () => {
+  it.each([LEGACY_KEY, STORAGE_KEY])(
+    'removes the retired placeholder from %s and preserves history',
+    (key) => {
+      const data = fixture();
+      data.habits[0]!.title = 'My small habit';
+      data.habits[0]!.normal = 'Spend 10 minutes on my goal';
+      data.logs['2026-09-02'] = { walk: { type: 'normal' } };
+      const storage = memoryStorage({
+        [key]: JSON.stringify(key === STORAGE_KEY ? { version: 2, data } : data),
+      });
+      const loaded = loadData(storage);
+      expect(loaded.data.habits).toEqual([]);
+      expect(loaded.data.profile?.priority).toBe('');
+      expect(loaded.data.logs).toEqual(data.logs);
+      expect(loadData(storage).data.habits).toEqual([]);
+    },
+  );
+
   it('migrates v1 without changing or deleting the original payload', () => {
     const original = JSON.stringify(fixture());
     const storage = memoryStorage({ [LEGACY_KEY]: original });

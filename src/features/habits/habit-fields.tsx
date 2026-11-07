@@ -21,23 +21,13 @@ export function HabitFields({
       />
       <div className="formgrid">
         <div>
-          <label htmlFor={`${prefix}-normal`}>Normal version</label>
+          <label htmlFor={`${prefix}-normal`}>Task</label>
           <input
             id={`${prefix}-normal`}
             value={value.normal}
             required
             maxLength={160}
             onChange={(event) => onChange({ ...value, normal: event.target.value })}
-          />
-        </div>
-        <div>
-          <label htmlFor={`${prefix}-minimum`}>Minimum version</label>
-          <input
-            id={`${prefix}-minimum`}
-            value={value.minimum}
-            required
-            maxLength={160}
-            onChange={(event) => onChange({ ...value, minimum: event.target.value })}
           />
         </div>
       </div>

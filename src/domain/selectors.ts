@@ -60,7 +60,7 @@ export function getRecommendation(data: AppData, today: string): string {
   const earliest = recentDays(today)[0]!;
   const checks = Object.entries(data.checks).filter(([day]) => day >= earliest && day <= today);
   if (checks.length >= 3 && checks.filter(([, entry]) => entry.energy <= 2).length >= 2) {
-    return 'You recorded low energy on at least two recent days. Try your minimum versions and move one habit to an easier time.';
+    return 'You recorded low energy on at least two recent days. Consider moving one habit to an easier time.';
   }
   const latestReason = Object.entries(data.logs)
     .filter(([day]) => day <= today)
