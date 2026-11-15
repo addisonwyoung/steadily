@@ -13,7 +13,8 @@ import { WeekChart } from '../progress/week-chart';
 
 export default function TodayPage() {
   const data = useSteadily((state) => state.data);
-  const complete = useSteadily((state) => state.completeHabit);
+  const complete = useSteadily((state) => state.completeOnline);
+  const saving = useSteadily((state) => state.completionSaving);
   const today = useToday();
   const notify = useFeedback();
   const [checkIn, setCheckIn] = useState(false);
@@ -50,10 +51,10 @@ export default function TodayPage() {
             <p>{focus.normal}</p>
             <button
               className="primary"
-              disabled={isComplete(data.logs[today]?.[focus.id])}
-              onClick={() => {
+              disabled={saving || isComplete(data.logs[today]?.[focus.id])}
+              onClick={async () => {
                 try {
-                  complete(focus.id);
+                  await complete(focus.id);
                   notify('Habit completed.');
                 } catch (err) {
                   notify(errorMessage(err));

@@ -10,6 +10,13 @@ const { fetchUserHabits, initialize } = vi.hoisted(() => ({
   fetchUserHabits: vi.fn(),
   initialize: vi.fn(),
 }));
+vi.mock('../features/habits/completions', () => ({
+  completionRepository: () => ({
+    load: vi.fn().mockResolvedValue([]),
+    import: vi.fn().mockResolvedValue(undefined),
+    save: vi.fn(),
+  }),
+}));
 vi.mock('../features/habits/user-habits', () => ({
   fetchUserHabits,
   userHabitRepository: () => ({ initialize, add: vi.fn(), remove: vi.fn() }),

@@ -27,6 +27,8 @@ const navigation = [
 ];
 function Layout() {
   const profile = useSteadily((state) => state.data.profile);
+  const completionSaving = useSteadily((state) => state.completionSaving);
+  const completionSyncError = useSteadily((state) => state.completionSyncError);
   const storageError = useSteadily((state) => state.storageError);
   const today = useToday();
   const { pathname } = useLocation();
@@ -71,6 +73,8 @@ function Layout() {
           <AccountControls />
         </div>
         <ErrorMessage error={storageError} />
+        <ErrorMessage error={completionSyncError} />
+        {completionSaving && <p role="status">Saving your progress…</p>}
         <PomodoroProvider>
           <Suspense fallback={<p role="status">Opening your space…</p>}>
             <Outlet />

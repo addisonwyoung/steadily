@@ -8,7 +8,8 @@ import { suggestions } from '../../domain/content';
 
 export function RecoveryDialog({ habit, onClose }: { habit: Habit; onClose(): void }) {
   const recordMiss = useSteadily((state) => state.recordMiss);
-  const completeHabit = useSteadily((state) => state.completeHabit);
+  const completeHabit = useSteadily((state) => state.completeOnline);
+  const saving = useSteadily((state) => state.completionSaving);
   const notify = useFeedback();
   const [reason, setReason] = useState<Reason | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,9 +46,10 @@ export function RecoveryDialog({ habit, onClose }: { habit: Habit; onClose(): vo
           <div className="callout">{suggestions[reason]}</div>
           <button
             className="primary full"
-            onClick={() => {
+            disabled={saving}
+            onClick={async () => {
               try {
-                completeHabit(habit.id);
+                await completeHabit(habit.id);
                 notify('Habit completed.');
                 onClose();
               } catch (err) {

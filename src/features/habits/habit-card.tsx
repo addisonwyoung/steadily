@@ -9,13 +9,14 @@ import { RecoveryDialog } from './recovery-dialog';
 
 export function HabitCard({ habit, today }: { habit: Habit; today: string }) {
   const entry = useSteadily((state) => state.data.logs[today]?.[habit.id]);
-  const completeHabit = useSteadily((state) => state.completeHabit);
-  const undoHabit = useSteadily((state) => state.undoHabit);
+  const completeHabit = useSteadily((state) => state.completeOnline);
+  const undoHabit = useSteadily((state) => state.undoOnline);
   const [dialog, setDialog] = useState<'recovery' | null>(null);
+  const saving = useSteadily((state) => state.completionSaving);
   const notify = useFeedback();
-  function perform(action: () => void, message: string) {
+  async function perform(action: () => Promise<void>, message: string) {
     try {
-      action();
+      await action();
       notify(message);
     } catch (err) {
       notify(errorMessage(err));
@@ -38,6 +39,7 @@ export function HabitCard({ habit, today }: { habit: Habit; today: string }) {
               Completed ·{' '}
               <button
                 className="textbutton"
+                disabled={saving}
                 onClick={() => perform(() => undoHabit(habit.id), 'Completion undone.')}
               >
                 Undo
@@ -50,6 +52,7 @@ export function HabitCard({ habit, today }: { habit: Habit; today: string }) {
       </div>
       <div className="actions">
         <button
+          disabled={saving}
           aria-pressed={isComplete(entry)}
           className={isComplete(entry) ? 'active' : ''}
           onClick={() => perform(() => completeHabit(habit.id), 'Habit completed.')}

@@ -100,3 +100,9 @@ In Productivity, choose a selected habit and start a focus timer. A fully comple
 Active timers and pending uploads recover from account-scoped browser storage after refresh. Recovery depends on retaining that browser data; an unfinished timer does not transfer to another device. Saved session history does follow the account. Failed uploads show a retry control. The weekly report groups saved completions into seven local calendar days, with daily minutes, habit totals, and recent sessions. These are self-reported focus durations, not proof of activity. Avoid operating the same recovered timer in multiple tabs simultaneously.
 
 Tests cover refresh recovery, offline retries with stable IDs, account isolation, timer controls, history failures, daily aggregation, and database request scoping. Hosted database policies and live cross-device behavior require verification after applying the migration.
+
+## Completion and graph syncing
+
+Apply `supabase/migrations/202611140001_create_habit_completions.sql` in the same Supabase project used by the app, then deploy the updated code. Completed habits and Undo now save to `habit_completions`, keyed by user, template, and local calendar date. Undo writes a false row; this prevents a second browser's legacy import from resurrecting an undone completion.
+
+Startup imports matching older browser completions once without overwriting existing server rows, preserves a local recovery copy, and loads server history before showing progress. Keep the browser containing your old completions and open the updated app there to import them. Progress refreshes when the tab regains focus and every 15 seconds while visible. A failed read never becomes an empty successful result; failed writes leave the visible completion unchanged. Concurrent changes to the same habit/date use last successful database write wins. Check-ins and offline activities remain browser-only.

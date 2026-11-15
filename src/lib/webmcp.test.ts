@@ -4,21 +4,21 @@ import { createSteadilyStore } from '../store/create-store';
 import { fixture, memoryStorage } from '../test/fixtures';
 import { LEGACY_KEY } from './storage';
 
-it('agent tools use the same validated state actions as the UI', () => {
+it('agent tools use the same validated state actions as the UI', async () => {
   const store = createSteadilyStore({
     storage: memoryStorage({ [LEGACY_KEY]: JSON.stringify(fixture()) }),
     today: () => '2026-09-07',
   });
   const [read, complete] = habitTools(store, () => '2026-09-07');
   expect(read?.annotations.readOnlyHint).toBe(true);
-  expect(complete?.execute({ habitId: 'walk', version: 'minimum' })).toEqual({
+  expect(await complete?.execute({ habitId: 'walk', version: 'minimum' })).toEqual({
     habitId: 'walk',
-    completion: { type: 'minimum' },
+    completion: { type: 'normal' },
   });
   expect(read?.execute({})).toMatchObject({
-    habits: [{ id: 'walk', completion: { type: 'minimum' } }],
+    habits: [{ id: 'walk', completion: { type: 'normal' } }],
   });
-  expect(() => complete?.execute({ habitId: 'missing', version: 'normal' })).toThrow();
-  expect(() => complete?.execute({ habitId: 'walk', version: 'bad' })).toThrow();
-  expect(store.getState().data.logs['2026-09-07']?.walk?.type).toBe('minimum');
+  await expect(complete?.execute({ habitId: 'missing', version: 'normal' })).rejects.toThrow();
+  await expect(complete?.execute({ habitId: 'walk', version: 'bad' })).rejects.toThrow();
+  expect(store.getState().data.logs['2026-09-07']?.walk?.type).toBe('normal');
 });

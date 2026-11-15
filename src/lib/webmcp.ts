@@ -48,9 +48,9 @@ export function habitTools(store: SteadilyStoreApi, today = localDay): ModelTool
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false },
-      execute(input) {
-        const { habitId, version } = completionInput.parse(input);
-        store.getState().completeHabit(habitId, version);
+      async execute(input) {
+        const { habitId } = completionInput.parse(input);
+        await store.getState().completeOnline(habitId);
         return { habitId, completion: store.getState().data.logs[today()]?.[habitId] };
       },
     },

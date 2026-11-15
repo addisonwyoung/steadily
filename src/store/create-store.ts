@@ -1,3 +1,4 @@
+import type { CompletionRepository, CompletionRow } from '../features/habits/completions';
 import type { HabitRepository } from '../features/habits/user-habits';
 import { createStore } from 'zustand/vanilla';
 import { z } from 'zod';
@@ -24,6 +25,7 @@ import { loadData, persistData, type StoragePort } from '../lib/storage';
 interface StoreDependencies {
   storage: StoragePort;
   habitRepository?: HabitRepository;
+  completions?: CompletionRepository;
   today?: () => string;
   createId?: () => string;
 }
@@ -41,6 +43,12 @@ export interface SteadilyStore {
   saveCheckIn(input: CheckIn, missedReasons: Record<string, Reason>): void;
   completeChallenge(difficulty: number, enjoyment: number): void;
   setUserHabits(habits: Habit[]): void;
+  completionSaving: boolean;
+  completionSyncError: string | null;
+  setCompletionSyncError(message: string | null): void;
+  setCompletions(rows: CompletionRow[]): void;
+  completeOnline(id: string): Promise<void>;
+  undoOnline(id: string): Promise<void>;
   habitsSaving: boolean;
   addSelectedHabit(input: HabitInput): Promise<void>;
   removeSelectedHabit(id: string): Promise<void>;
@@ -50,6 +58,7 @@ export interface SteadilyStore {
 export function createSteadilyStore({
   storage,
   habitRepository,
+  completions,
   today = localDay,
   createId = () => crypto.randomUUID(),
 }: StoreDependencies) {
@@ -74,8 +83,61 @@ export function createSteadilyStore({
       }
       set({ data: validated, storageError });
     };
+    async function changeCompletion(id: string, completed: boolean) {
+      if (get().completionSaving)
+        throw new Error('Please wait for the current completion to save.');
+      if (!get().writable) throw new Error('Saving is paused.');
+      const habit = findHabit(id);
+      const day = currentDay();
+      set({ completionSaving: true, completionSyncError: null });
+      try {
+        if (completions) {
+          if (!habit.templateId) throw new Error('Reload to link this habit to your account.');
+          await completions.save({ habit_id: habit.templateId, day, completed });
+        }
+        const data = get().data;
+        const entries = { ...data.logs[day] };
+        if (completed) entries[id] = { type: 'normal' };
+        else delete entries[id];
+        commit({ ...data, logs: { ...data.logs, [day]: entries } });
+      } finally {
+        set({ completionSaving: false });
+      }
+    }
     return {
       ...initial,
+      completionSaving: false,
+      completionSyncError: null,
+      setCompletionSyncError(message) {
+        set({ completionSyncError: message });
+      },
+      completeOnline: (id) => changeCompletion(id, true),
+      undoOnline: (id) => changeCompletion(id, false),
+      setCompletions(rows) {
+        const data = get().data;
+        // Replace completed entries from the server; keep browser-only missed-day reflections.
+        const logs: AppData['logs'] = Object.fromEntries(
+          Object.entries(data.logs).map(([day, entries]) => [
+            day,
+            Object.fromEntries(
+              Object.entries(entries).filter(([, entry]) => entry.type === 'missed'),
+            ),
+          ]),
+        );
+        for (const row of rows) {
+          const habit = data.habits.find((habit) => habit.templateId === row.habit_id);
+          if (habit && row.completed)
+            logs[row.day] = { ...logs[row.day], [habit.id]: { type: 'normal' } };
+        }
+        const habits = data.habits.map((habit) => {
+          const first = rows
+            .filter((row) => row.habit_id === habit.templateId)
+            .map((row) => row.day)
+            .sort()[0];
+          return first && first < habit.created ? { ...habit, created: first } : habit;
+        });
+        commit({ ...data, habits, logs });
+      },
       storageError: initial.error,
       habitsSaving: false,
       setUserHabits(incoming) {
@@ -88,7 +150,7 @@ export function createSteadilyStore({
               (!candidate.templateId &&
                 (candidate.title === habit.title || candidate.normal === habit.normal)),
           );
-          return old ? { ...habit, id: old.id, created: old.created } : habit;
+          return old ? { ...habit, id: old.id } : habit;
         });
         const priority = habits.some((habit) => habit.id === data.profile?.priority)
           ? data.profile!.priority
