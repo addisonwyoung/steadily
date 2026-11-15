@@ -90,3 +90,13 @@ Build artifacts are generated from source, not hand-edited. The original impleme
 - Why actions inject the clock, ID generator, and storage port for deterministic tests.
 - How feature boundaries and lazy routes keep rendering concerns separate from domain rules.
 - Where the architecture would need to change for authentication, server persistence, and conflict handling.
+
+## Habit-linked focus sessions
+
+Apply `supabase/migrations/202611070001_create_focus_sessions.sql` in Supabase's SQL Editor after the habit-template migration. The migration creates immutable, account-owned session records with insert/read permissions, duration constraints, and a history index. It has not been applied automatically to the hosted project.
+
+In Productivity, choose a selected habit and start a focus timer. A fully completed focus session is queued locally and uploaded with a stable UUID; retrying cannot create a second record. Pausing excludes paused time from credited minutes. Resetting or changing modes cancels an unfinished session. Breaks do not create records or automatically complete a habit.
+
+Active timers and pending uploads recover from account-scoped browser storage after refresh. Recovery depends on retaining that browser data; an unfinished timer does not transfer to another device. Saved session history does follow the account. Failed uploads show a retry control. The weekly report groups saved completions into seven local calendar days, with daily minutes, habit totals, and recent sessions. These are self-reported focus durations, not proof of activity. Avoid operating the same recovered timer in multiple tabs simultaneously.
+
+Tests cover refresh recovery, offline retries with stable IDs, account isolation, timer controls, history failures, daily aggregation, and database request scoping. Hosted database policies and live cross-device behavior require verification after applying the migration.

@@ -1176,3 +1176,92 @@ progress::-moz-progress-bar {
     animation: none;
   }
 }
+
+.focus-report {
+  margin-top: 24px;
+}
+.focus-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+.focus-summary > div {
+  background: #f1f7f3;
+  padding: 18px;
+  border-radius: 14px;
+}
+.focus-summary strong {
+  display: block;
+  font-size: 2rem;
+  color: #254f46;
+}
+.focus-summary span {
+  font-size: 0.85rem;
+}
+.focus-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin: 24px 0;
+}
+.focus-bar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.focus-bar-track {
+  height: 110px;
+  width: 100%;
+  max-width: 44px;
+  display: flex;
+  align-items: flex-end;
+  background: #edf2ed;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.focus-bar-track > div {
+  width: 100%;
+  background: #487c64;
+  border-radius: 8px 8px 0 0;
+}
+.focus-habit-totals {
+  padding: 0;
+  list-style: none;
+}
+.focus-habit-totals li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  border-bottom: 1px solid #e1e8df;
+}
+.focus-history-scroll {
+  overflow-x: auto;
+}
+.focus-save-state {
+  padding: 12px;
+  background: #f1f7f3;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+@media (max-width: 650px) {
+  .focus-summary {
+    gap: 6px;
+  }
+  .focus-summary > div {
+    padding: 10px;
+  }
+  .focus-summary strong {
+    font-size: 1.5rem;
+  }
+  .focus-summary span {
+    font-size: 0.75rem;
+  }
+  .focus-bars {
+    gap: 5px;
+  }
+}

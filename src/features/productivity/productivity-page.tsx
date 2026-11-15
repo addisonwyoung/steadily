@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { PageHeading } from '../../components/ui';
 import { usePomodoro } from './pomodoro';
+import { FocusReport } from './focus-report';
 
 export default function ProductivityPage() {
   const timer = usePomodoro();
@@ -37,6 +38,39 @@ export default function ProductivityPage() {
               {timer.running ? 'In progress' : progress > 0 ? 'Paused' : 'Ready'}
             </span>
           </div>
+          <label htmlFor="focus-habit">What are you focusing on?</label>
+          <select
+            id="focus-habit"
+            value={timer.selectedHabitId}
+            disabled={timer.lockedHabit || timer.blocked}
+            onChange={(event) => timer.selectHabit(event.target.value)}
+          >
+            <option value="">Choose one of your habits</option>
+            {timer.habits
+              .filter((habit) => habit.templateId)
+              .map((habit) => (
+                <option key={habit.id} value={habit.templateId}>
+                  {habit.title}
+                </option>
+              ))}
+            {timer.active &&
+              !timer.habits.some((habit) => habit.templateId === timer.active?.habitId) && (
+                <option value={timer.active.habitId}>Previously selected habit</option>
+              )}
+          </select>
+          {timer.lockedHabit && (
+            <p className="note">
+              The habit stays linked while this session is running or paused. Reset cancels the
+              unfinished session.
+            </p>
+          )}
+          {timer.blocked && (
+            <p role="alert">
+              Your saved timer could not be read. Reset to start fresh; a recovery copy will be
+              preserved.
+            </p>
+          )}
+          {timer.storageError && <p role="alert">{timer.storageError}</p>}
           <div className="pomodoro-modes" role="group" aria-label="Timer mode">
             <button aria-pressed={timer.mode === 'focus'} onClick={() => timer.reset('focus')}>
               <Sparkles size={16} aria-hidden="true" /> Focus
@@ -82,7 +116,16 @@ export default function ProductivityPage() {
             </div>
           </div>
           <div className="pomodoro-controls">
-            <button className="primary" onClick={timer.toggle}>
+            <button
+              className="primary"
+              onClick={timer.toggle}
+              disabled={
+                timer.blocked ||
+                (!isBreak &&
+                  !timer.active &&
+                  !timer.habits.some((habit) => habit.templateId === timer.selectedHabitId))
+              }
+            >
               {timer.running ? (
                 <Pause size={18} aria-hidden="true" />
               ) : (
@@ -95,6 +138,23 @@ export default function ProductivityPage() {
               Reset
             </button>
           </div>
+          {timer.pending.length > 0 && (
+            <div className="focus-save-state">
+              <p role="status">
+                {timer.saving
+                  ? 'Saving focus session…'
+                  : `${timer.pending.length} completed session(s) waiting to save.`}
+              </p>
+              {timer.saveError && (
+                <>
+                  <p role="alert">{timer.saveError}</p>
+                  <button disabled={timer.saving} onClick={timer.retrySaving}>
+                    Retry session save
+                  </button>
+                </>
+              )}
+            </div>
+          )}
           <p className="note pomodoro-message" role="status">
             {timer.message}
           </p>
@@ -167,10 +227,13 @@ export default function ProductivityPage() {
           </form>
           <p className="note">
             When a session ends, the next timer is ready. Press Start when you’re ready to continue.
-            Your timer keeps running as you explore other tabs; refreshing the app resets it.
+            Your timer recovers after refresh in this browser. Keep using the same account and
+            browser to resume it. Completed sessions are saved to your account; they do not
+            automatically mark a habit complete.
           </p>
         </section>
       </div>
+      <FocusReport />
     </>
   );
 }
