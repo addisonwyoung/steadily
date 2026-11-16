@@ -1,4 +1,6 @@
 # Steadily
+# Link
+https://steadily-tan.vercel.app/
 
 A mobile-friendly habit app for people who find rigid productivity systems hard to sustain. Each habit has one task and a single completion action. Progress measures showing up and returning after missed days, without resetting a streak.
 
